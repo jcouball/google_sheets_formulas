@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'erb'
+require 'ostruct'
+
+def new_vertical(id, name, spreadsheet_id) = OpenStruct.new(id:, name:, spreadsheet_id:)
+
+verticals = <<~VERTICALS.split("\n").map { |line| new_vertical(*line.split("\t")) }
+  3	Central Data	1B8Jrkk2lQjuESB-CwxgJ8bZITXjDa5s7No0oeH8Zm2A
+  4	Consumer Research	1vXC18ihcXEuPZyg06qz45W66ozj91N86FjS-HzmBDXM
+  5	Paranoids	1RsMSqLPzF6YioAzJCIGQJtqfcvoaPBXQXWKaQzBxKOI
+  6	YPE	1ez5AlGw-u7_JmdrolrHSrU04rs7d9x3yM9f0Fw8BF0E
+  11	Search	1Kg7g45vVAH0iL23jwqgwnC7bHUkbpgLT1N9yCnkNU5c
+  9	Mail	1MbTkipF8gHTdZx_AiA6svGq1lawmuaZLO8K6w3m7vA8
+  20	Asia	1ORrYUAMLTKPjkav5UUdQVjavE6X7GqUE0uy0FaVGGl0
+  8	Platform Services	1Bui2PEKHh8KEN4xkdItzUQcav6FVgHTjdGz9BypxirU
+  10	News	1eCG6_5AIz6GTYyAMsrkVynIdvs3t14z4RF0dFKAOzhk
+  12	Sports	1CHL95EzlVAQuSCetl_otytSCVSk9QlWaJ9g-388X_6k
+  13	Finance	1g7GLtvZn-kiBG0G1j0ddy-vZI_QVimAm7mrji6dSQUk
+  14	YARD	1ChyYqKgEwPh2wmEN1cSNerpj3sLZacYu2Hf6_GKHpH0
+VERTICALS
+
+template = ERB.new <<~TEMPLATE
+  =QUERY(
+    {<% verticals.each_with_index do |vertical, index| %>
+      IFERROR(
+        FILTER(
+          IMPORTRANGE("<%= vertical.spreadsheet_id %>", "committed_past_due_report!B2:G"),
+          IMPORTRANGE("<%= vertical.spreadsheet_id %>", "committed_past_due_report!B2:B") <> ""
+        ),
+        { "", "", "", "", "", "" }
+      )<% if index < verticals.length - 1 %>;\n<% end %><% end %>
+    },
+    "SELECT * WHERE Col1 <> ''",
+    0
+  )
+TEMPLATE
+
+puts template.result(binding)

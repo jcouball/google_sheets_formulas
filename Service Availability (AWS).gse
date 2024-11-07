@@ -1,0 +1,72 @@
+=SORT(
+  ARRAY_CONSTRAIN(
+    FILTER(
+      {Jiras!$A$4:$E, Jiras!$H$4:$H, Jiras!$J$4:$J, Jiras!$L$4:$M},
+      $B$2 = Jiras!$F$4:$F,
+      SEARCH(IF($B$3<>"", """" & $B$3 & """", ""), Jiras!$Q$4:$Q) > 0,
+      NOT(ISNUMBER(SEARCH("""" & $B$4 & """", Jiras!$Q$4:$Q))),
+      "" <> Jiras!$E4:$E,
+      IF($B$5<>"", $B$5, DATEVALUE("2000/01/01")) < Jiras!$E4:$E,
+      IF($B$6<>"", $B$6, DATEVALUE("2099/12/31")) >= Jiras!$E4:$E,
+      REGEXMATCH(
+        Jiras!$B$4:$B,
+        IFS(
+          AND($B$7, $B$8),
+          "Initiative|Epic",
+          $B$7,
+          "Initiative",
+          $B$8,
+          "Epic",
+          TRUE,
+          "---"
+        )
+      )
+    ),
+    IF($B$9<>"", MIN($B$9, 30), 30),
+    999
+  ),
+  5,
+  TRUE
+)
+
+=SORT(
+  FILTER(
+    {
+      IFS(
+        Services!$Q$4:$Q = "",
+        "",
+        Services!$Q$4:$Q = "Already Available",
+        "---",
+        Services!$Q$4:$Q = "NOT FOUND",
+        "???",
+        TRUE,
+        HYPERLINK("https://jira.ouryahoo.com/browse/" & Services!$Q$4:$Q, IFNA(REGEXEXTRACT(Services!$Q$4:$Q, "-(\d+)"), ""))
+      ),
+      Services!$A$4:$A,
+      Services!$C$4:$C,
+      IF(Services!$Q$4:$Q <> "", "AWS", ""),
+      Services!$R$4:$S,
+      Services!$U$4:$U,
+      IFS(
+        ISERROR(MONTH(Services!$U$4:$U)),
+        "",
+        MONTH(Services!$U$4:$U) <= 3,
+        "Q1",
+        MONTH(Services!$U$4:$U) <= 6,
+        "Q2",
+        MONTH(Services!$U$4:$U) <= 9,
+        "Q3",
+        TRUE,
+        "Q4"
+      ) & " '" & TEXT(Services!$U$4:$U, "YY")
+    },
+    ARRAYFORMULA(IFERROR(IF(DATEVALUE(Services!$U$4:$U),TRUE),FALSE))
+  ),
+  7,
+  TRUE
+)
+
+
+    REGEXMATCH(Services!$A$4:$A, IF($C$2<>"All", "^" & $C$2 & "$", ".*")),
+    IF($C$3<>"", $C$3, DATEVALUE("2000/01/01")) <= Services!$U$4:$U,
+    IF($C$4<>"", $C$4, DATEVALUE("2099/12/31")) >= Services!$U$4:$U

@@ -1,0 +1,51 @@
+/* MANAGEMENT_CHAIN
+ *
+ * Returns the management chain for a given employee as a comma delimited string
+ *
+ * Example:
+ *   =MAP(
+ *     $A$2:$A,
+ *     LAMBDA(
+ *       id,
+ *       LET(
+ *         ids, $A$2:$A,
+ *         manager_ids, $C$2:$C,
+ *         MANAGEMENT_CHAIN(id, ids, manager_ids)
+ *       )
+ *     )
+ *   )
+ *
+ * id: the id of the employee whose management chain is to be calculated
+ * ids: the list of employee ids (including the given id)
+ * manager_ids: the list of manager ids corresponding to the employee ids
+ *
+ */
+=LET(
+  manager_id, XLOOKUP(id, ids, manager_ids),
+  management_chain_str, IF(manager_id = "", id, MANAGEMENT_CHAIN(manager_id, ids, manager_ids) & "," & id),
+  management_chain_str
+)
+
+
+/* Example:
+ *
+ * Given that the employee table is in columns A to C, where column A
+ * contains the employee's id and column C contains the id of the employee's
+ * manager. The following formula will return an array consisting of one
+ * row per given employee, where each row contains the employee's organization
+ * level and management chain:
+ */
+=MAP(
+  $A$2:$A,
+  LAMBDA(
+    id,
+    LET(
+      ids, $A$2:$A,
+      manager_ids, $C$2:$C,
+      management_chain_str, MANAGEMENT_CHAIN(id, ids, manager_ids),
+      org_level, LEN(management_chain_str) - LEN(SUBSTITUTE(management_chain_str, ",", "")) + 1,
+      management_chain, SPLIT(management_chain_str, ","),
+      { org_level, management_chain }
+    )
+  )
+)

@@ -1,0 +1,205 @@
+=FILTER(INDIRECT("Services!$R$4:$R"))
+IFS(B5 = "", "", TRUE, )
+
+
+
+=INDEX(
+  INDIRECT("Services!S4:S"),
+  MATCH(
+    B5,
+    INDIRECT("Services!C4:C"),
+    0
+  )
+) = "Yellow"
+
+=ARRAYFORMULA(
+  IFS(
+    $A4:$A = "",
+    "",
+    TRUE,
+    VLOOKUP($A4:$A, SOWs!$A$3:$Y, COLUMN(SOWs!$K$3) - COLUMN(SOWs!$A$3) + 1, FALSE)
+  )
+)
+
+
+
+=VLOOKUP($A4, INDIRECT("SOWs!$A$3:$Y"), 20, FALSE) <> "Approved"
+
+=IFS(
+  $J3>$F3,
+  "▲",
+  $J3<$F3,
+  "▼",
+  TRUE,
+  ""
+)
+
+
+=ARRAYFORMULA(
+  IF(
+    $C4:$C = "",
+    "",
+    IF(
+      $R4:$R = "Complete",
+      IF(
+        TODAY() > $U4:$U + 14,
+        "✅ ",
+        "🆕 "
+      ),
+      ""
+    ) & $C4:$C
+  )
+)
+
+
+
+=ARRAYFORMULA(
+  IFS(
+    $C4:$C = "",
+    "",
+    $R4:$R <> "Complete",
+    2,
+    TODAY()<($U4:$U + 14),
+    1,
+    TRUE,
+    0
+  )
+)
+
+=ARRAYFORMULA(
+  IF(
+    $C4:$C = "",
+    "",
+    IF($W4:$W = "Complete", "✅ ", "") & $C4:$C
+  )
+)
+=ARRAYFORMULA(
+  IF(
+    $C4:$C = "",
+    "",
+    IF(
+      $W4:$W = "Complete",
+      IF(
+        TODAY() < $Z4:$Z + 14,
+        "🆕 ",
+        "✅ "
+      ),
+      ""
+    ) & $C4:$C
+  )
+)
+
+
+=IFNA(
+  JOIN(
+    CHAR(10),
+    SORT(
+      FILTER(Services!$AE4:$AE, Services!$U4:$U>E$3, Services!$U4:$U<=F$3))), "--")
+
+
+=IFNA(JOIN(CHAR(10), SORT(FILTER(Services!$AG4:$AG, Services!$Z4:$Z>E$3, Services!$Z4:$Z<=F$3))), "")
+
+=IFNA(
+  JOIN(
+    CHAR(10),
+    SORT(
+      FILTER(
+        Services!$AG4:$AG,
+        Services!$Z4:$Z>E$3,
+        Services!$Z4:$Z<=F$3
+      ),
+      FILTER(
+        Services!$AH4:$AH,
+        Services!$Z4:$Z>E$3,
+        Services!$Z4:$Z<=F$3
+      ),
+      TRUE,
+      FILTER(
+        Services!$C4:$C,
+        Services!$Z4:$Z>E$3,
+        Services!$Z4:$Z<=F$3
+      ),
+      TRUE
+    )
+  ),
+  "--"
+)
+
+=ARRAYFORMULA(
+  IFS(
+    $C4:$C = "",
+    "",
+    $Q4:$Q = "",
+    $C4:$C,
+    $Q4:$Q = "N/A",
+    $C4:$C,
+    $Q4:$Q = "Already Available",
+    "✅ " & $C4:$C,
+    $R4:$R = "Complete",
+    IF(
+      TODAY() < VLOOKUP($Q4:$Q, Jiras!$A$4:$AL, COLUMN(Jiras!$P$4) - COLUMN(Jiras!$A$4) + 1, FALSE) + 14,
+      "🆕 ",
+      "✅ "
+    ) & $C4:$C,
+    (($S4:$S = "Red") + ($S4:$S = "Yellow")),
+    IF(
+      $S4:$S = "Red",
+      "🔴",
+      "🟡"
+    ) & $C4:$C,
+    TRUE,
+    IF(
+      TODAY() + 14 > VLOOKUP($Q4:$Q, Jiras!$A$4:$AL, COLUMN(Jiras!$E$4) - COLUMN(Jiras!$A$4) + 1, FALSE),
+      "⏱ ",
+      ""
+    ) & $C4:$C
+  )
+)
+
+
+Jira ticket (AWS): Q4
+Jira ticket (GCP): V4
+
+Health: Jiras!$J4
+Health: VLOOKUP($Q4:$Q, Jiras!$A$4:$AL, COLUMN(Jira!$J$4) - COLUMN(Jira!$A$4) + 1, FALSE)
+
+Resolved Date: Jiras!$P4
+Resolved Date: VLOOKUP($Q4:$Q, Jiras!$A$4:$AL, COLUMN(Jira!$P$4) - COLUMN(Jira!$A$4) + 1, FALSE)
+
+
+Red circle: 🔴
+Yellow circle: 🟡
+Stopwatch: ⏱
+New icon: 🆕
+Complete icon: ✅
+
+
+Up arrow: ▲
+Down arrow: ▼
+
+
+=IFNA(
+  JOIN(
+    CHAR(10),
+    SORT(
+      FILTER(
+        Services!$AG4:$AG,
+        Services!$Z4:$Z>J$3,
+        Services!$Z4:$Z<=K$3
+      ),
+      FILTER(
+        Services!$AH4:$AH,
+        Services!$Z4:$Z>J$3,
+        Services!$Z4:$Z<=K$3
+      ),
+      TRUE,
+      FILTER(
+        Services!$C4:$C,
+        Services!$Z4:$Z>J$3,
+        Services!$Z4:$Z<=K$3
+      ),
+      TRUE
+    )
+  ),
+  "--"
+)

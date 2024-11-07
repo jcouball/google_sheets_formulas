@@ -1,0 +1,44 @@
+=IFS(
+  (($I4<>"Yes") + ($K4<>"Yes")),
+  "N/A",
+  OR(
+    NOT(ISNA(FILTER(Jiras!$A$4:$A, Jiras!$A$4:$A=$J4, FIND("needs-psr", Jiras!$Q$4:$Q)>0))),
+    NOT(ISNA(FILTER(Jiras!$A$4:$A, Jiras!$A$4:$A=$Q4, FIND("needs-psr", Jiras!$Q$4:$Q)>0))),
+    NOT(ISNA(FILTER(Jiras!$A$4:$A, Jiras!$A$4:$A=$V4, FIND("needs-psr", Jiras!$Q$4:$Q)>0)))
+  ),
+  "Yes",
+  TRUE,
+  "No"
+)
+
+=AND(
+  $C4<>"",
+  $I4<>"No",
+  $I4<>"TBD",
+  $Z4="JIRA NOT FOUND"
+)
+
+=IFS(
+  $C4="",
+  FALSE,
+  $AA4<>"Yes",
+  $AB4<>"N/A",
+  TRUE,
+  NOT(REGEXMATCH($AB4, "^PPS[ER]-\d+$"))
+)
+
+
+=ARRAYFORMULA(
+  IFS(
+    $C2:$C="",
+    "",
+    TRUE,
+    VLOOKUP($C2:$C, Jiras!$A$4:$F, 6, FALSE)
+))
+
+=AND(
+  ISDATE($Y4),
+  DATEVALUE("2023-04-01") <= DATEVALUE($Y4),
+  DATEVALUE($Y4) <= DATEVALUE("2023-06-30"),
+  DATEVALUE("2023-06-30") < DATEVALUE($Z4)
+)

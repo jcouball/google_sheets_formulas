@@ -1,0 +1,250 @@
+# VERTICAL_TABLE
+# The data table to be used for defining verticals. The first row should contain column names.
+
+=verticals!$A$1:$ZZZ
+
+# VERTICAL_IDS
+# Return an unsorted column of vertical IDs. Inactive verticals are excluded.
+
+=LET(
+  id_column_name, "id",
+  active_column_name, "active?",
+  column_names, INDEX(VERTICAL_TABLE(), 1, 0),
+  id_column_num, MATCH(id_column_name, column_names, 0),
+  id_column, INDEX(VERTICAL_TABLE(), 0, id_column_num),
+  active_column_num, MATCH(active_column_name, column_names, 0),
+  active_column, INDEX(VERTICAL_TABLE(), 0, active_column_num),
+  unfiltered_ids, OFFSET(id_column, 1, 0, ROWS(id_column) - 1),
+  filter_table, MAP(
+    unfiltered_ids,
+    LAMBDA(
+      id,
+      {
+        id,
+        DGET(VERTICAL_TABLE(), active_column_name, { "id"; id })
+      }
+    )
+  ),
+  filtered_table, FILTER(filter_table, INDEX(filter_table, , 1) <> "", INDEX(filter_table, , 2) = "Yes"),
+  ids, INDEX(filtered_table, 0, 1),
+  ids
+)
+
+# VERTICAL_ORG_SORT_KEY(ID)
+# ID: identifies the vertical whose organization sort key is to be calculated
+# The sort key to use to sort verticals in organization order.
+
+=LET(
+  parrent, DGET(VERTICAL_TABLE(), "parent", { "id"; id }),
+  order_within_parent, DGET(VERTICAL_TABLE(), "order_within_parent", { "id"; id }),
+  IF(
+    parrent = "",
+    "",
+    TEXT(VERTICAL_ORG_SORT_KEY(parrent), "0000") & "-"
+  ) & TEXT(order_within_parent, "0000")
+)
+
+# VERTICAL_IDS_SORTED_BY_ORG
+# The list of vertical IDs sorted in organization order
+
+=LET(
+  sorting_table, MAP(
+    VERTICAL_IDS(),
+    LAMBDA(
+      id,
+      {
+        id,
+        VERTICAL_ORG_SORT_KEY(id)
+      }
+    )
+  ),
+  sorted_table, SORT(sorting_table, 2, TRUE),
+  sorted_ids, INDEX(sorted_table, 0, 1),
+  sorted_ids
+)
+
+# VERTICAL_IDS_SORTED_BY_NAME
+# The list of vertical IDs sorted by name
+
+=LET(
+  sorting_table, MAP(
+    VERTICAL_IDS(),
+    LAMBDA(
+      id,
+      {
+        id,
+        DGET(VERTICAL_TABLE(), "name", { "id"; id })
+      }
+    )
+  ),
+  sorted_table, SORT(sorting_table, 2, TRUE),
+  sorted_ids, INDEX(sorted_table, 0, 1),
+  sorted_ids
+)
+
+# TSG_VERTICAL_IDS(vertical_ids)
+# vertical_ids: the list of vertical ids
+# Return a list of TSG vertical IDs, filtered by the "tsg_vertical?" column
+
+=LET(
+  filter_table, MAP(
+    vertical_ids,
+    LAMBDA(
+      id,
+      {
+        id,
+        DGET(VERTICAL_TABLE(), "tsg_vertical?", { "id"; id })
+      }
+    )
+  ),
+  filtered_table, FILTER(filter_table, INDEX(filter_table, , 2) = "Yes"),
+  filtered_ids, INDEX(filtered_table, 0, 1),
+  filtered_ids
+)
+
+# TSG_VERTICAL_LEADERS
+# Return a table of TSG vertical leaders sorted by org
+
+=LET(
+  ids, TSG_VERTICAL_IDS(VERTICAL_IDS_SORTED_BY_ORG()),
+  tsg_table, MAP(
+    ids,
+    LAMBDA(
+      id,
+      LET(
+        l2_org, DGET(VERTICAL_TABLE(), "l2_org", { "id"; id }),
+        name, DGET(VERTICAL_TABLE(), "name", { "id"; id }),
+        yeng_leader, DGET(VERTICAL_TABLE(), "yeng_leader", { "id"; id }),
+        tsg_tech_lead, DGET(VERTICAL_TABLE(), "tsg_tech_lead", { "id"; id }),
+        {
+          id,
+          l2_org,
+          name,
+          yeng_leader,
+          tsg_tech_lead
+        }
+      )
+    )
+  ),
+  tsg_table
+)
+
+# TSG_VERTICALS
+# Return a table of TSG verticals sorted by name
+
+
+=LET(
+  ids, TSG_VERTICAL_IDS(VERTICAL_IDS_SORTED_BY_NAME()),
+  tsg_table, MAP(
+    ids,
+    LAMBDA(
+      id,
+      LET(
+        name, DGET(VERTICAL_TABLE(), "name", { "id"; id }),
+        yeng_leader, DGET(VERTICAL_TABLE(), "yeng_leader", { "id"; id }),
+        tsg_tech_lead, DGET(VERTICAL_TABLE(), "tsg_tech_lead", { "id"; id }),
+        {
+          id,
+          HYPERLINK(sheetLink(name), name),
+          yeng_leader,
+          tsg_tech_lead
+        }
+      )
+    )
+  ),
+  tsg_table
+)
+
+
+# DT_VERTICAL_IDS(vertical_ids)
+# vertical_ids: the list of vertical ids
+# Return a list of DT vertical IDs, filtered by the "on_dt_dashboard?" column
+
+=LET(
+  filter_table, MAP(
+    vertical_ids,
+    LAMBDA(
+      id,
+      {
+        id,
+        DGET(VERTICAL_TABLE(), "on_dt_dashboard?", { "id"; id })
+      }
+    )
+  ),
+  filtered_table, FILTER(filter_table, INDEX(filter_table, , 2) = "Yes"),
+  filtered_ids, INDEX(filtered_table, 0, 1),
+  filtered_ids
+)
+
+# DT_VERTICAL_LIST(ids)
+# ids: list of vertical ids to include in the list
+# Return a table of all verticals
+# Example: DT_VERTICAL_LIST(VERTICAL_IDS_SORTED_BY_ORG())
+
+=LET(
+  vertical_table, MAP(
+    DT_VERTICAL_IDS(ids),
+    LAMBDA(
+      id,
+      LET(
+        l2_org, DGET(VERTICAL_TABLE(), "l2_org", { "id"; id }),
+        name, DGET(VERTICAL_TABLE(), "name", { "id"; id }),
+        {
+          id,
+          l2_org,
+          name
+        }
+      )
+    )
+  ),
+  vertical_table
+)
+
+=MAP(
+  $A2:$A,
+  ARRAYFORMULA(ROW($E2:$E)),
+  LAMBDA(
+    short_id,
+    row,
+    LET(
+      start_column, COLUMN($E2),
+      end_column, COLUMN($M2),
+      raw_management_chain, { INDIRECT("R" & row & "C" & start_column & ":R" & row & "C" & end_column, FALSE) },
+      management_chain, FILTER(raw_management_chain, raw_management_chain <> ""),
+      level, COLUMNS(management_chain),
+      manager, IF(level = 1, "", INDEX(management_chain, COLUMNS(management_chain) - 1)),
+      manager
+    )
+  )
+)
+
+
+# MANAGEMENT_CHAIN(id, ids, manager_ids)
+# short_id: the short ID of the person whose management chain is to be calculated
+# Return the management chain of the person
+
+=LET(
+  manager_id, XLOOKUP(id, ids, manager_ids),
+  management_chain_str, IF(manager_id = "", id, MANAGEMENT_CHAIN(manager_id) & "," & id),
+  management_chain_str
+)
+
+=MAP($A$2:$A, LAMBDA(short_id, MANAGEMENT_CHAIN(short_id)))
+
+
+=MAP(
+  $A$2:$A,
+  LAMBDA(
+    short_id,
+    LET(
+      management_chain, MANAGEMENT_CHAIN(short_id),
+      {
+        LEN(management_chain) - LEN(SUBSTITUTE(management_chain, ",", "")) + 1,
+        SPLIT(management_chain, ",")
+      }
+    )
+  )
+)
+
+
+    =

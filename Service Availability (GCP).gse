@@ -1,0 +1,96 @@
+=SORT(
+  FILTER(
+    {
+      Services!$B$4:$B &
+
+      IFS(
+        Services!$V$4:$V = "",
+        "",
+        Services!$V$4:$V = "Already Available",
+        "---",
+        Services!$V$4:$V = "NOT FOUND",
+        "???",
+        TRUE,
+        HYPERLINK("https://jira.ouryahoo.com/browse/" & Services!$V$4:$V, IFNA(REGEXEXTRACT(Services!$V$4:$V, "-(\d+)"), ""))
+      ),
+      Services!$A$4:$A,
+      Services!$C$4:$C,
+      IF(Services!$V$4:$V <> "", "GCP", ""),
+      Services!$W$4:$X,
+      Services!$Z$4:$Z,
+      IFS(
+        ISERROR(MONTH(Services!$Z$4:$Z)),
+        "",
+        MONTH(Services!$Z$4:$Z) <= 3,
+        "Q1",
+        MONTH(Services!$Z$4:$Z) <= 6,
+        "Q2",
+        MONTH(Services!$Z$4:$Z) <= 9,
+        "Q3",
+        TRUE,
+        "Q4"
+      ) & " '" & TEXT(Services!$Z$4:$Z, "YY")
+    },
+    ARRAYFORMULA(IFERROR(IF(DATEVALUE(Services!$Z$4:$Z),TRUE),FALSE))
+  ),
+  7,
+  TRUE
+)
+
+=ARRAYFORMULA(IF($A1:$A = "", "", EDATE($A1:$A, 3) - 1))
+
+=ARRAYFORMULA(
+  IFS(
+    ROW($A2:$A) = 1,
+    MIN(availability!$G$2:$G),
+    TRUE,
+    EDATE($A1:$A1000, 1)
+  )
+)
+
+=DATE(YEAR(MIN(availability!$G$2:$G)), MOD(MONTH(MIN(availability!$G$2:$G)), 3) * 3 + 1)
+
+=MIN(availability!$G$2:$G)
+
+=DATE(YEAR(MAX(availability!$G$2:$G)), FLOOR((MONTH(MAX(availability!$G$2:$G))-1)/3)*3 + 1, 1)
+=ARRAYFORMULA(EDATE($A2:$A, 3))
+
+=IFS(
+  MONTH($B1) <= 3,
+  "Q1",
+  MONTH($B1) <= 6,
+  "Q2",
+  MONTH($B1) <= 9,
+  "Q3",
+  TRUE,
+  "Q4"
+) & " '" & TEXT($B1, "YY")
+
+=ARRAYFORMULA(
+  IFS(
+    $B$1 < EDATE($B$1, (ROW($A4:$A) - ROW($A$4)) * 3),
+    "",
+    TRUE,
+    EDATE($B$1, (ROW($A4:$A) - ROW($A$4)) * 3)
+  )
+)
+
+=SORT(
+  {aws_availability!$A$2:$H; gcp_availability!$A$2:$H},
+  7,
+  TRUE
+)
+
+=FILTER(
+  {
+    availability!$A$2:$A,
+    availability!$C$2:$C,
+    availability!$D$2:$D,
+    availability!$G$2:$G,
+    availability!$E$2:$E
+  },
+  availability!$B$2:$B = $C$5,
+  availability!$H$2:$H = $C$6
+)
+
+REGEXMATCH(Services!$A$4:$A, IF($C$2<>"All", "^" & $C$2 & "$", ".*"))
